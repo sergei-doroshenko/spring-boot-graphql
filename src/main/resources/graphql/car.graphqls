@@ -1,0 +1,16 @@
+type Car {
+    id: ID!
+    vin: String!
+    make: String!
+    model: String!
+    year: String!
+}
+
+type Query {
+    findAllCars: [Car]!
+}
+
+type Mutation {
+    newCar(vin: String!, make: String!, model: String!, year: String!) : Car!
+    deleteCar(id: ID!) : Boolean
+}
