@@ -7,7 +7,7 @@
     <groupId>org.sdoroshenko</groupId>
     <artifactId>spring-boot-graphql</artifactId>
     <version>1.0-SNAPSHOT</version>
-    <packaging>pom</packaging>
+    <packaging>jar</packaging>
 
     <name>Spring Boot GraphQL Server</name>
     <description>Spring Boot GraphQL Server</description>
@@ -22,9 +22,6 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <java.version>1.8</java.version>
-
-        <carcode-common-persistence-version>[0.4.660, 0.5.0)</carcode-common-persistence-version>
-        <carcode-common-model-version>[0.3.466, 0.4.0)</carcode-common-model-version>
     </properties>
 
     <dependencies>
@@ -39,6 +36,11 @@
         <dependency>
             <groupId>com.graphql-java</groupId>
             <artifactId>graphql-spring-boot-starter</artifactId>
+            <version>3.10.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.graphql-java</groupId>
+            <artifactId>graphiql-spring-boot-starter</artifactId>
             <version>3.10.0</version>
         </dependency>
         <dependency>
