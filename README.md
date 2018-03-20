@@ -9,3 +9,6 @@ postman POST
 `{
 	"query":"{findAllCars{id vin make}}"
 }`
+
+for subscription:
+`ws://localhost:8080/messages`

@@ -1,3 +1,9 @@
+schema {
+    query: Query
+    mutation: Mutation
+    subscription : Subscription
+}
+
 type Car {
     id: ID!
     vin: String!
@@ -13,4 +19,13 @@ type Query {
 type Mutation {
     newCar(vin: String!, make: String!, model: String!, year: String!) : Car!
     deleteCar(id: ID!) : Boolean
+}
+
+type Message {
+    id: ID!
+    body: String!
+}
+
+type Subscription {
+    messages: Message!
 }

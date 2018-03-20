@@ -51,6 +51,8 @@ out/
 
 # mpeltonen/sbt-idea plugin
 .idea_modules/
+.idea
+*.iml
 
 # Crashlytics plugin (for Android Studio and IntelliJ)
 com_crashlytics_export_strings.xml
@@ -70,5 +72,4 @@ buildNumber.properties
 
 # Avoid ignoring Maven wrapper jar file (.jar files are usually ignored)
 !/.mvn/wrapper/maven-wrapper.jar
-.idea
-spring-boot-graphql.iml
+

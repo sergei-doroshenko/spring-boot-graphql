@@ -7,6 +7,7 @@ import org.sdoroshenko.model.Car;
 import org.sdoroshenko.repository.CarRepository;
 import org.sdoroshenko.resolver.Mutation;
 import org.sdoroshenko.resolver.Query;
+import org.sdoroshenko.resolver.Subscription;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -41,6 +42,11 @@ public class GraphQLServerApplication {
     }
 
     @Bean
+    public Subscription subscription() {
+        return new Subscription();
+    }
+
+    @Bean
     public GraphQLErrorHandler errorHandler() {
         return new GraphQLErrorHandler() {
             @Override
@@ -69,7 +75,7 @@ public class GraphQLServerApplication {
     @Bean
     public CommandLineRunner startup(CarRepository carRepository) {
         return (args) -> {
-            carRepository.save(new Car(null, "vin", "make", "model", "year"));
+            carRepository.save(new Car(null, "S0273VI3748374K", "Honda", "Civic", "2007"));
         };
     }
 }
