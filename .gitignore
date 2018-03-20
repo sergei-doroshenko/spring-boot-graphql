@@ -70,15 +70,5 @@ buildNumber.properties
 
 # Avoid ignoring Maven wrapper jar file (.jar files are usually ignored)
 !/.mvn/wrapper/maven-wrapper.jar
-
-.idea/checkstyle-idea.xml
-.idea/codeStyles/
-.idea/compiler.xml
-.idea/dbnavigator.xml
-.idea/encodings.xml
-.idea/kotlinc.xml
-.idea/misc.xml
-.idea/modules.xml
-.idea/sonarlint/
-.idea/vcs.xml
+.idea
 spring-boot-graphql.iml
