@@ -1,0 +1,12 @@
+schema {
+    subscription : Subscription
+}
+
+type Message {
+    id: ID!
+    body: String!
+}
+
+type Subscription {
+    messages: Message!
+}

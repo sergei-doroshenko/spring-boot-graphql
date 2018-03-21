@@ -1,5 +1,6 @@
 package org.sdoroshenko;
 
+import org.sdoroshenko.publisher.MessageGraphqlPublisher;
 import org.sdoroshenko.resolver.SocketHandler;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -17,7 +18,7 @@ public class WebSocketConfig implements WebSocketConfigurer {
 
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
-        registry.addHandler(socketHandler(sessionStorage()), "/messages").setAllowedOrigins("*");
+        registry.addHandler(socketHandler(sessionStorage(), messageGraphqlPublisher()), "/messages").setAllowedOrigins("*");
     }
 
     @Bean
@@ -26,7 +27,12 @@ public class WebSocketConfig implements WebSocketConfigurer {
     }
 
     @Bean
-    public SocketHandler socketHandler(List<WebSocketSession> sessionStorage) {
-        return new SocketHandler(sessionStorage);
+    MessageGraphqlPublisher messageGraphqlPublisher() {
+        return new MessageGraphqlPublisher();
+    }
+
+    @Bean
+    public SocketHandler socketHandler(List<WebSocketSession> sessionStorage, MessageGraphqlPublisher messageGraphqlPublisher) {
+        return new SocketHandler(sessionStorage, messageGraphqlPublisher);
     }
 }
