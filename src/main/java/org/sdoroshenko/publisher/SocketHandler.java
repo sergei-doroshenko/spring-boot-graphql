@@ -1,6 +1,5 @@
-package org.sdoroshenko.resolver;
+package org.sdoroshenko.publisher;
 
-import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import graphql.ExecutionInput;
 import graphql.ExecutionResult;
@@ -13,12 +12,10 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.hibernate.engine.spi.QueryParameters;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
-import org.sdoroshenko.model.Message;
-import org.sdoroshenko.publisher.MessageGraphqlPublisher;
+import org.sdoroshenko.resolver.GraphQLRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.socket.TextMessage;

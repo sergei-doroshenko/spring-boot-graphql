@@ -1,7 +1,7 @@
 package org.sdoroshenko;
 
 import org.sdoroshenko.publisher.MessageGraphqlPublisher;
-import org.sdoroshenko.resolver.SocketHandler;
+import org.sdoroshenko.publisher.SocketHandler;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.socket.WebSocketSession;

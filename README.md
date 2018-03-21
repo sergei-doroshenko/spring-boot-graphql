@@ -12,3 +12,5 @@ postman POST
 
 for subscription:
 `ws://localhost:8080/messages`
+query
+`{"query":"subscription {messages {id}}","variables":null}`
