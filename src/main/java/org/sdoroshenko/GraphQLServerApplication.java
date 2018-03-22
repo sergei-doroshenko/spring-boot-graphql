@@ -3,16 +3,13 @@ package org.sdoroshenko;
 import graphql.ExceptionWhileDataFetching;
 import graphql.GraphQLError;
 import graphql.servlet.GraphQLErrorHandler;
+import org.sdoroshenko.exception.GraphQLErrorAdapter;
 import org.sdoroshenko.model.Car;
 import org.sdoroshenko.repository.CarRepository;
-import org.sdoroshenko.resolver.Mutation;
-import org.sdoroshenko.resolver.Query;
-import org.sdoroshenko.resolver.Subscription;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
-import org.sdoroshenko.resolver.CarResolver;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,27 +23,6 @@ public class GraphQLServerApplication {
     }
 
     @Bean
-    public CarResolver carResolver(CarRepository carRepository) {
-        return new CarResolver(carRepository);
-    }
-
-
-    @Bean
-    public Query query(CarRepository carRepository) {
-        return new Query(carRepository);
-    }
-
-    @Bean
-    public Mutation mutation(CarRepository carRepository) {
-        return new Mutation(carRepository);
-    }
-
-    @Bean
-    public Subscription subscription() {
-        return new Subscription();
-    }
-
-    @Bean
     public GraphQLErrorHandler errorHandler() {
         return new GraphQLErrorHandler() {
             @Override
@@ -57,7 +33,7 @@ public class GraphQLServerApplication {
 
                 List<GraphQLError> serverErrors = errors.stream()
                     .filter(e -> !isClientError(e))
-//                    .map(GraphQLErrorAdapter::new)
+                    .map(GraphQLErrorAdapter::new)
                     .collect(Collectors.toList());
 
                 List<GraphQLError> e = new ArrayList<>();

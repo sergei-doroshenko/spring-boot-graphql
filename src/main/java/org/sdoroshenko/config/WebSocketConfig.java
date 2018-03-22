@@ -1,7 +1,8 @@
-package org.sdoroshenko;
+package org.sdoroshenko.config;
 
 import org.sdoroshenko.publisher.MessageGraphqlPublisher;
 import org.sdoroshenko.publisher.SocketHandler;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.socket.WebSocketSession;
@@ -13,6 +14,7 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 @Configuration
+@ConditionalOnProperty("subscription.websocket1")
 @EnableWebSocket
 public class WebSocketConfig implements WebSocketConfigurer {
 
