@@ -40,6 +40,12 @@ public class SocketHandler extends TextWebSocketHandler {
     private final AtomicReference<Subscription> subscriptionRef = new AtomicReference<>();
 
     @Override
+    public void afterConnectionEstablished(WebSocketSession session) throws Exception {
+        //the messages will be broadcasted to all users.
+        sessions.add(session);
+    }
+
+    @Override
     public void handleTextMessage(WebSocketSession session, TextMessage message) throws IOException {
         String graphqlQuery = message.getPayload();
         logger.info("Server got {}", graphqlQuery);
@@ -58,10 +64,6 @@ public class SocketHandler extends TextWebSocketHandler {
             singletonList(new TracingInstrumentation())
         );
 
-        //
-        // In order to have subscriptions in graphql-java you MUST use the
-        // SubscriptionExecutionStrategy strategy.
-        //
         GraphQL graphQL = GraphQL
             .newGraphQL(graphqlPublisher.getGraphQLSchema())
             .instrumentation(instrumentation)
@@ -123,12 +125,4 @@ public class SocketHandler extends TextWebSocketHandler {
             e.printStackTrace();
         }
     }
-
-    @Override
-    public void afterConnectionEstablished(WebSocketSession session) throws Exception {
-        //the messages will be broadcasted to all users.
-        sessions.add(session);
-    }
-
-
 }

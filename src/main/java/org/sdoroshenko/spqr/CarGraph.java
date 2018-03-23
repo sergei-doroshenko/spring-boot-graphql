@@ -13,7 +13,7 @@ public class CarGraph {
 
     private CarRepository carRepository;
 
-    @GraphQLQuery(name = "findAllCars")
+    @GraphQLQuery(name = "cars")
     public List<Car> findAllCars() {
         return Lists.newArrayList(carRepository.findAll());
     }

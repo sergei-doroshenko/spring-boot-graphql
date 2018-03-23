@@ -1,7 +1,6 @@
 package org.sdoroshenko.config;
 
-import org.sdoroshenko.publisher.MessageGraphqlPublisher;
-import org.sdoroshenko.publisher.SocketHandler;
+import org.sdoroshenko.publisher.SocketHandlerSPQR;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -14,13 +13,13 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 @Configuration
-@ConditionalOnProperty(name = "graphql.type", havingValue = "java-tools")
+@ConditionalOnProperty(name = "graphql.type", havingValue = "spqr")
 @EnableWebSocket
-public class WebSocketConfig implements WebSocketConfigurer {
+public class WebSocketConfigSPQR implements WebSocketConfigurer {
 
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
-        registry.addHandler(socketHandler(sessionStorage(), messageGraphqlPublisher()), "/messages").setAllowedOrigins("*");
+        registry.addHandler(socketHandler(), "/messages-spqr").setAllowedOrigins("*");
     }
 
     @Bean
@@ -29,12 +28,7 @@ public class WebSocketConfig implements WebSocketConfigurer {
     }
 
     @Bean
-    MessageGraphqlPublisher messageGraphqlPublisher() {
-        return new MessageGraphqlPublisher();
-    }
-
-    @Bean
-    public SocketHandler socketHandler(List<WebSocketSession> sessionStorage, MessageGraphqlPublisher messageGraphqlPublisher) {
-        return new SocketHandler(sessionStorage, messageGraphqlPublisher);
+    public SocketHandlerSPQR socketHandler() {
+        return new SocketHandlerSPQR();
     }
 }
