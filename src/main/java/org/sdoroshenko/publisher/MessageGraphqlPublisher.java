@@ -6,20 +6,23 @@ import graphql.schema.idl.RuntimeWiring;
 import graphql.schema.idl.SchemaGenerator;
 import graphql.schema.idl.SchemaParser;
 import graphql.schema.idl.TypeDefinitionRegistry;
+import lombok.Getter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.UnsupportedEncodingException;
-import java.util.Collections;
-import java.util.List;
 
 import static graphql.schema.idl.TypeRuntimeWiring.newTypeWiring;
 
 public class MessageGraphqlPublisher {
-    private final static MessagePublisher MESSAGE_PUBLISHER = new MessagePublisher();
+    private static final Logger logger = LoggerFactory.getLogger(MessageGraphqlPublisher.class);
+    private static final MessageStreamer messagePublisher = new MessageStreamer();
 
+    @Getter
     private final GraphQLSchema graphQLSchema;
 
     public MessageGraphqlPublisher() {
@@ -27,14 +30,11 @@ public class MessageGraphqlPublisher {
     }
 
     private GraphQLSchema buildSchema() {
-        //
-        // reads a file that provides the schema types
-        //
         Reader streamReader = null;
         try {
             streamReader = loadSchemaFile("graphql/car.graphqls");
         } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
+            logger.error(e.getMessage(), e);
         }
 
         TypeDefinitionRegistry typeRegistry = new SchemaParser().parse(streamReader);
@@ -50,22 +50,10 @@ public class MessageGraphqlPublisher {
 
     /**
      * The DataFetcher behind a subscription field is responsible for creating the Publisher of data.
-     * @return
+     * @return {@link DataFetcher}
      */
     private DataFetcher messagesSubscriptionFetcher() {
-        return environment -> {
-            List<String> arg = environment.getArgument("fields");
-            List<String> messageFilter = arg == null ? Collections.emptyList() : arg;
-            if (messageFilter.isEmpty()) {
-                return MESSAGE_PUBLISHER.getPublisher();
-            } else {
-                return MESSAGE_PUBLISHER.getPublisher(messageFilter);
-            }
-        };
-    }
-
-    public GraphQLSchema getGraphQLSchema() {
-        return graphQLSchema;
+        return environment -> messagePublisher.getPublisher();
     }
 
     @SuppressWarnings("SameParameterValue")

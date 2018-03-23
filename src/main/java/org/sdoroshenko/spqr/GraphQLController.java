@@ -27,7 +27,7 @@ public class GraphQLController {
 
     @PostMapping(value = "/graphql", consumes = MediaType.APPLICATION_JSON_UTF8_VALUE, produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
     @ResponseBody
-    public ExecutionResult execute(@RequestBody GraphQLRequest request) { // replace to GraphQLRequest
+    public ExecutionResult execute(@RequestBody GraphQLRequest request) {
         logger.info("Received request: {}", request);
         return graphQL.execute(ExecutionInput.newExecutionInput()
                 .query(request.getQuery())

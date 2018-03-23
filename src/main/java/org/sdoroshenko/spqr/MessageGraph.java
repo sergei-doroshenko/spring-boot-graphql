@@ -1,18 +1,15 @@
 package org.sdoroshenko.spqr;
 
 import io.leangen.graphql.annotations.GraphQLSubscription;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.Setter;
 import org.reactivestreams.Publisher;
 import org.sdoroshenko.model.Message;
-import org.sdoroshenko.publisher.MessagePublisher;
+import org.sdoroshenko.publisher.MessageStreamer;
+import org.springframework.beans.factory.annotation.Autowired;
 
-@AllArgsConstructor
-public class Messenger {
+public class MessageGraph {
 
-    @Getter @Setter
-    private MessagePublisher messagePublisher;
+    @Autowired
+    private MessageStreamer messagePublisher;
 
     @GraphQLSubscription(name = "messages")
     public Publisher<Message> messages() {

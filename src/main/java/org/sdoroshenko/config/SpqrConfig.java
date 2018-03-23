@@ -11,10 +11,9 @@ import io.leangen.graphql.metadata.strategy.query.AnnotatedResolverBuilder;
 import io.leangen.graphql.metadata.strategy.query.BeanResolverBuilder;
 import io.leangen.graphql.metadata.strategy.query.PublicResolverBuilder;
 import io.leangen.graphql.metadata.strategy.value.jackson.JacksonValueMapperFactory;
-import org.sdoroshenko.publisher.MessagePublisher;
 import org.sdoroshenko.repository.CarRepository;
 import org.sdoroshenko.spqr.CarGraph;
-import org.sdoroshenko.spqr.Messenger;
+import org.sdoroshenko.spqr.MessageGraph;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
@@ -30,12 +29,12 @@ public class SpqrConfig extends WebMvcConfigurerAdapter {
     }
 
     @Bean
-    public Messenger messageSubscription(MessagePublisher messagePublisher) {
-        return new Messenger(messagePublisher);
+    public MessageGraph messageGraph() {
+        return new MessageGraph();
     }
 
     @Bean
-    public GraphQL graphQL(CarGraph carGraph, Messenger messageSubscription) {
+    public GraphQL graphQL(CarGraph carGraph, MessageGraph messageGraph) {
         GraphQLSchema schema = new GraphQLSchemaGenerator()
             .withResolverBuilders(
                 new BeanResolverBuilder("org.sdoroshenko.model"),
@@ -44,7 +43,7 @@ public class SpqrConfig extends WebMvcConfigurerAdapter {
                 // Resolve public methods inside root package.
                 new PublicResolverBuilder("org.sdoroshenko.spqr"))
             .withOperationsFromSingleton(carGraph)
-            .withOperationsFromSingleton(messageSubscription)
+            .withOperationsFromSingleton(messageGraph)
             .withValueMapperFactory(new JacksonValueMapperFactory())
             .generate();
 
