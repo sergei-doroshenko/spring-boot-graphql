@@ -11,6 +11,14 @@ postman POST
 }`
 
 for subscription:
-`ws://localhost:8080/messages`
+`ws://localhost:8080/messages-spqr`
 query
-`{"query":"subscription {messages {id}}","variables":null}`
+`
+{
+	"query": "subscription {messages {id}}",
+	"variables": null
+}
+`
+
+todo: split on 2 applications, simplify configurations and classes
+? splitting in pres mode - works fine
