@@ -15,18 +15,23 @@ import org.reactivestreams.Publisher;
 import org.sdoroshenko.model.Car;
 import org.sdoroshenko.model.Message;
 import org.sdoroshenko.publisher.MessageStreamer;
+import org.sdoroshenko.publisher.SocketHandlerSPQR;
 import org.sdoroshenko.repository.CarRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
+import org.springframework.web.socket.config.annotation.EnableWebSocket;
+import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
+import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry;
 
 import java.util.Arrays;
 import java.util.List;
 
 @SpringBootApplication
-public class GraphQLSpqrApplication {
+@EnableWebSocket
+public class GraphQLSpqrApplication implements WebSocketConfigurer {
 
     public static void main(String[] args) {
         SpringApplication.run(GraphQLSpqrApplication.class, args);
@@ -37,8 +42,8 @@ public class GraphQLSpqrApplication {
 
         private CarRepository carRepository;
 
-        @GraphQLQuery(name = "cars")
-        public List<Car> findAllCars() {
+        @GraphQLQuery(name = "getAllCars")
+        public List<Car> getAllCars() {
             return Lists.newArrayList(carRepository.findAll());
         }
 
@@ -74,6 +79,16 @@ public class GraphQLSpqrApplication {
     @Bean
     public MessageGraph messageGraph() {
         return new MessageGraph();
+    }
+
+    @Bean
+    public SocketHandlerSPQR socketHandler() {
+        return new SocketHandlerSPQR();
+    }
+
+    @Override
+    public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
+        registry.addHandler(socketHandler(), "/messages-spqr").setAllowedOrigins("*");
     }
 
     @Bean

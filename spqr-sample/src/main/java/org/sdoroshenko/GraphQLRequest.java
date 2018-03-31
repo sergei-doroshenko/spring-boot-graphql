@@ -1,4 +1,4 @@
-package org.sdoroshenko.config;
+package org.sdoroshenko;
 
 import java.util.HashMap;
 import java.util.Map;
