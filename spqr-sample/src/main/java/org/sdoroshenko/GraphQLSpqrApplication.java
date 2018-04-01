@@ -10,13 +10,13 @@ import graphql.schema.GraphQLSchema;
 import io.leangen.graphql.GraphQLSchemaGenerator;
 import io.leangen.graphql.annotations.*;
 import io.leangen.graphql.metadata.strategy.value.jackson.JacksonValueMapperFactory;
-import lombok.AllArgsConstructor;
 import org.reactivestreams.Publisher;
-import org.sdoroshenko.model.Car;
+import org.sdoroshenko.model.Conversation;
 import org.sdoroshenko.model.Message;
 import org.sdoroshenko.publisher.MessageStreamer;
 import org.sdoroshenko.publisher.SocketHandlerSPQR;
-import org.sdoroshenko.repository.CarRepository;
+import org.sdoroshenko.repository.ConversationRepository;
+import org.sdoroshenko.repository.MessageRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
@@ -37,38 +37,29 @@ public class GraphQLSpqrApplication implements WebSocketConfigurer {
         SpringApplication.run(GraphQLSpqrApplication.class, args);
     }
 
-    @AllArgsConstructor
-    public static class CarGraph {
-
-        private CarRepository carRepository;
-
-        @GraphQLQuery(name = "getAllCars")
-        public List<Car> getAllCars() {
-            return Lists.newArrayList(carRepository.findAll());
-        }
-
-        @GraphQLMutation(name = "addCar")
-        public Car addCar(
-                @GraphQLArgument(name = "vin") String vin,
-                @GraphQLArgument(name = "make") @GraphQLNonNull String make,
-                @GraphQLArgument(name = "model") String model,
-                @GraphQLArgument(name = "year") String year
-        ) {
-
-            return carRepository.save(new Car(null, vin, make, model, year));
-        }
-
-    }
-
-    @Bean
-    public CarGraph carGraph(CarRepository carRepository) {
-        return new CarGraph(carRepository);
-    }
-
     public static class MessageGraph {
 
         @Autowired
+        private MessageRepository messageRepository;
+
+        @Autowired
         private MessageStreamer messagePublisher;
+
+        @Autowired
+        private MessageStreamer messageStreamer;
+
+        @GraphQLQuery(name = "getAllMessages")
+        public List<Message> getAllMessages() {
+            return Lists.newArrayList(messageRepository.findAll());
+        }
+
+        @GraphQLMutation(name = "addMessage")
+        public Message addMessage(
+                @GraphQLArgument(name = "body") @GraphQLNonNull String body,
+                @GraphQLArgument(name = "conversationId") @GraphQLNonNull Long conversationId
+        ) {
+            return messageStreamer.emitMessage(new Message(null, body, conversationId));
+        }
 
         @GraphQLSubscription(name = "messages")
         public Publisher<Message> messages() {
@@ -91,11 +82,27 @@ public class GraphQLSpqrApplication implements WebSocketConfigurer {
         registry.addHandler(socketHandler(), "/messages-spqr").setAllowedOrigins("*");
     }
 
+    public static class ConversationGraph {
+        @Autowired
+        private ConversationRepository conversationRepository;
+
+        @GraphQLQuery
+        public Conversation getConversation(@GraphQLArgument(name = "id") @GraphQLNonNull Long conversationId) {
+            return conversationRepository.findOne(conversationId);
+        }
+
+    }
+
     @Bean
-    public GraphQL graphQL(CarGraph carGraph, MessageGraph messageGraph) {
+    public ConversationGraph conversationGraph() {
+        return new ConversationGraph();
+    }
+
+    @Bean
+    public GraphQL graphQL(MessageGraph messageGraph, ConversationGraph conversationGraph) {
         GraphQLSchema schema = new GraphQLSchemaGenerator()
-                .withOperationsFromSingleton(carGraph)
                 .withOperationsFromSingleton(messageGraph)
+                .withOperationsFromSingleton(conversationGraph)
                 .withValueMapperFactory(new JacksonValueMapperFactory())
                 .generate();
 
@@ -109,10 +116,12 @@ public class GraphQLSpqrApplication implements WebSocketConfigurer {
     }
 
     @Bean
-    public CommandLineRunner startup(CarRepository carRepository) {
+    public CommandLineRunner startup(ConversationRepository conversationRepository, MessageRepository messageRepository) {
         return (args) -> {
-            carRepository.save(new Car(null, "S0273VI3748374K", "Honda", "Civic", "2007"));
-            carRepository.save(new Car(null, "1FA0273VI483550", "Toyota", "RAV4", "2017"));
+            Conversation conversation = new Conversation();
+            conversationRepository.save(conversation);
+            messageRepository.save(new Message(null, "one", conversation.getId()));
+            messageRepository.save(new Message(null, "two", conversation.getId()));
         };
     }
 }

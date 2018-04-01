@@ -19,6 +19,3 @@ query
 	"variables": null
 }
 `
-
-todo: split on 2 applications, simplify configurations and classes
-? splitting in pres mode - works fine

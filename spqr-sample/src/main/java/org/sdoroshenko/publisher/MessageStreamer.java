@@ -7,6 +7,8 @@ import io.reactivex.ObservableEmitter;
 import io.reactivex.observables.ConnectableObservable;
 import lombok.Getter;
 import org.sdoroshenko.model.Message;
+import org.sdoroshenko.repository.MessageRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.concurrent.Executors;
@@ -15,15 +17,17 @@ import java.util.concurrent.TimeUnit;
 
 @Component
 public class MessageStreamer {
-
-    private final ScheduledExecutorService executorService = Executors.newScheduledThreadPool(1);
+    @Autowired
+    private MessageRepository messageRepository;
 
     @Getter
     private final Flowable<Message> publisher;
+    @Getter
+    private ObservableEmitter<Message> emitter;
 
     public MessageStreamer() {
         Observable<Message> observable = Observable.create((ObservableEmitter<Message> emitter) -> {
-            executorService.scheduleAtFixedRate(emitMessages(emitter), 0, 2, TimeUnit.SECONDS);
+            this.emitter = emitter;
         });
 
         ConnectableObservable<Message> connectableObservable = observable.share().publish();
@@ -32,7 +36,9 @@ public class MessageStreamer {
         publisher = connectableObservable.toFlowable(BackpressureStrategy.BUFFER);
     }
 
-    private Runnable emitMessages(ObservableEmitter<Message> emitter) {
-        return () -> emitter.onNext(new Message(103L, "test: " + System.currentTimeMillis()));
+    public Message emitMessage(Message message) {
+        Message saved = messageRepository.save(message);
+        emitter.onNext(saved);
+        return saved;
     }
 }
