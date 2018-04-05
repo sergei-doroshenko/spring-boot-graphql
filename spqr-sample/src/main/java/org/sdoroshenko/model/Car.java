@@ -9,12 +9,14 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.Transient;
+import java.util.List;
 
 @Entity
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class Message {
+public class Car {
 
     @Id
     @Column(nullable = false)
@@ -22,11 +24,8 @@ public class Message {
     private Long id;
 
     @Column(nullable = false)
-    private String body;
+    private String vin;
 
-    @Column(nullable = false)
-    private Long conversation_id;
-
-    @Column
-    private Long carId;
+    @Transient
+    private List<String> images;
 }
