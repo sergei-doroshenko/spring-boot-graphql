@@ -31,12 +31,19 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.web.socket.config.annotation.EnableWebSocket;
 import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
 import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.joining;
 
@@ -49,8 +56,8 @@ public class GraphQLSpqrApplication implements WebSocketConfigurer {
     }
 
     @Bean
-    public CarGraph carGraph(JdbcTemplate jdbcTemplate) {
-        return new CarGraph(jdbcTemplate);
+    public ConversationGraph conversationGraph() {
+        return new ConversationGraph();
     }
 
     @Bean
@@ -59,11 +66,16 @@ public class GraphQLSpqrApplication implements WebSocketConfigurer {
     }
 
     @Bean
-    public GraphQL graphQL(MessageGraph messageGraph, ConversationGraph conversationGraph, CarGraph carGraph) {
+    public CarGraph carGraph(NamedParameterJdbcTemplate jdbcTemplate) {
+        return new CarGraph(jdbcTemplate);
+    }
+
+    @Bean
+    public GraphQL graphQL(CarGraph carGraph) {
         GraphQLSchema schema = new GraphQLSchemaGenerator()
-                .withOperationsFromSingleton(messageGraph)
-                .withOperationsFromSingleton(conversationGraph)
-            .withOperationsFromSingleton(carGraph)
+                .withOperationsFromSingleton(conversationGraph())
+                .withOperationsFromSingleton(messageGraph())
+                .withOperationsFromSingleton(carGraph)
                 .withValueMapperFactory(new JacksonValueMapperFactory())
                 .generate();
 
@@ -74,26 +86,6 @@ public class GraphQLSpqrApplication implements WebSocketConfigurer {
                         new MaxQueryDepthInstrumentation(20)
                 )))
                 .build();
-    }
-
-    @Bean
-    public CommandLineRunner startup(
-        ConversationRepository conversationRepository,
-        MessageRepository messageRepository,
-        CarRepository carRepository
-    ) {
-        return (args) -> {
-            Car car1 = new Car(null, "vin1", null);
-            carRepository.save(car1);
-            Car car2 = new Car(null, "vin2", null);
-            carRepository.save(car2);
-
-
-            Conversation conversation = new Conversation();
-            conversationRepository.save(conversation);
-            messageRepository.save(new Message(null, "one", conversation.getId(), car1.getId()));
-            messageRepository.save(new Message(null, "two", conversation.getId(), car2.getId()));
-        };
     }
 
     @Bean
@@ -115,11 +107,6 @@ public class GraphQLSpqrApplication implements WebSocketConfigurer {
             return conversationRepository.findOne(conversationId);
         }
 
-    }
-
-    @Bean
-    public ConversationGraph conversationGraph() {
-        return new ConversationGraph();
     }
 
     public static class MessageGraph {
@@ -155,52 +142,40 @@ public class GraphQLSpqrApplication implements WebSocketConfigurer {
 
     public static class CarGraph {
 
-        private final JdbcTemplate jdbcTemplate;
+        private final NamedParameterJdbcTemplate jdbcTemplate;
 
         @Autowired
-        public CarGraph(JdbcTemplate jdbcTemplate) {
+        public CarGraph(NamedParameterJdbcTemplate jdbcTemplate) {
             this.jdbcTemplate = jdbcTemplate;
         }
 
-        /*@GraphQLQuery(name = "car")
-        public Car car(@GraphQLContext Message message *//* I can get Car in Message context *//*) {
-            return jdbcTemplate.queryForObject("select * from car where id =" + message.getCarId(), (rs, rowNum) -> {
-                Car car = new Car();
-                car.setId(rs.getLong(1));
-                car.setVin(rs.getString(2));
-                return car;
-            });
+       /* @GraphQLQuery(name = "car")
+        public Car car(@GraphQLContext Message message) {
+            return jdbcTemplate.queryForObject(
+                    "select * from car where id = :carId",
+                    new MapSqlParameterSource("carId", message.getCarId()),
+                    (rs, rowNum) -> {
+                        Car car = new Car();
+                        car.setId(rs.getLong(1));
+                        car.setVin(rs.getString(2));
+                        return car;
+                    }
+            );
         }*/
 
         @GraphQLQuery(name = "car")
         @Batched
         public List<Car> cars(@GraphQLContext List<Message> messages) {
-            return jdbcTemplate.query("select * from car where id in("
-                + messages.stream().map(Message::getCarId).map(id -> id.toString()).collect(joining(","))
-                + ")", (rs, rowNum) -> {
+            List<Long> carIds = messages.stream().map(Message::getCarId).collect(Collectors.toList());
+            SqlParameterSource parameters = new MapSqlParameterSource("carIds", carIds);
+
+            return jdbcTemplate.query("select * from car where id in(:carIds)", parameters, (rs, rowNum) -> {
                 Car car = new Car();
                 car.setId(rs.getLong(1));
                 car.setVin(rs.getString(2));
                 return car;
             });
         }
-
-        /*@GraphQLQuery(name = "car")
-        @Batched
-        public List<Car> cars(
-            @GraphQLContext List<Message> messages, // I can get Car in Message context
-            @GraphQLEnvironment Set<String> subFields
-        ) {
-            return http.getForObject(
-                "http://localhost:9090/products?ids={id}",
-                Cars.class,
-                messages.stream().map(Message::getBody).collect(joining(",")),
-                String.join(",", subFields)
-            ).getCars();
-            return jdbcTemplate.queryForList("select * from car where id in (" +
-                messages.stream().map(Message::getCarId).map(id -> id.toString()).collect(joining(",")) +
-                ")", Car.class);
-        }*/
 
         @GraphQLQuery(name = "images")
         public List<String> images(
@@ -210,6 +185,25 @@ public class GraphQLSpqrApplication implements WebSocketConfigurer {
             return car.getImages().subList(
                 0, limit > 0 ? limit : car.getImages().size());
         }
+    }
 
+    @Bean
+    public CommandLineRunner startup(
+            ConversationRepository conversationRepository,
+            MessageRepository messageRepository,
+            CarRepository carRepository
+    ) {
+        return (args) -> {
+            Car car1 = new Car(null, "vin1", null);
+            carRepository.save(car1);
+            Car car2 = new Car(null, "vin2", null);
+            carRepository.save(car2);
+
+
+            Conversation conversation = new Conversation();
+            conversationRepository.save(conversation);
+            messageRepository.save(new Message(null, "one", conversation.getId(), car1.getId()));
+            messageRepository.save(new Message(null, "two", conversation.getId(), car2.getId()));
+        };
     }
 }
