@@ -29,7 +29,7 @@ public class SocketHandlerSPQR extends TextWebSocketHandler {
 
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
-        logger.info("Connected session: %d", session.getId());
+        logger.info("Connected session: {}", session.getId());
     }
 
     @Override
