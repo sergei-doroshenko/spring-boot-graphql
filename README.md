@@ -57,3 +57,15 @@ Hibernate:
 ```
 2018-04-05 18:27:17.883 DEBUG 15196 --- [nio-9000-exec-4] o.s.jdbc.core.JdbcTemplate               : Executing SQL query [select * from car where id in(1,2)]
 ```
+```
+{
+   "query":"query($uuid: Long!){
+      getConversation(id: $uuid) {
+        id
+        messages {
+          id
+          ...
+   }}}",
+   "variables":{"uuid":"88888888-4444-4444-4444-121212121212"}
+}
+```

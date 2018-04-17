@@ -4,6 +4,7 @@ import com.google.common.collect.Lists;
 import graphql.GraphQL;
 import graphql.analysis.MaxQueryComplexityInstrumentation;
 import graphql.analysis.MaxQueryDepthInstrumentation;
+import graphql.execution.AsyncExecutionStrategy;
 import graphql.execution.batched.Batched;
 import graphql.execution.batched.BatchedExecutionStrategy;
 import graphql.execution.instrumentation.ChainedInstrumentation;
@@ -11,9 +12,11 @@ import graphql.schema.GraphQLSchema;
 import io.leangen.graphql.GraphQLSchemaGenerator;
 import io.leangen.graphql.annotations.*;
 import io.leangen.graphql.metadata.strategy.value.jackson.JacksonValueMapperFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.reactivestreams.Publisher;
 import org.sdoroshenko.model.Car;
 import org.sdoroshenko.model.Conversation;
+import org.sdoroshenko.model.Customer;
 import org.sdoroshenko.model.Message;
 import org.sdoroshenko.publisher.MessageStreamer;
 import org.sdoroshenko.publisher.SocketHandlerSPQR;
@@ -34,6 +37,8 @@ import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @SpringBootApplication
@@ -60,16 +65,23 @@ public class GraphQLSpqrApplication implements WebSocketConfigurer {
     }
 
     @Bean
+    public CustomerGraph customerGraph() {
+        return new CustomerGraph();
+    }
+
+    @Bean
     public GraphQL graphQL(CarGraph carGraph) {
         GraphQLSchema schema = new GraphQLSchemaGenerator()
                 .withOperationsFromSingleton(conversationGraph())
                 .withOperationsFromSingleton(messageGraph())
                 .withOperationsFromSingleton(carGraph)
+                .withOperationsFromSingleton(customerGraph())
                 .withValueMapperFactory(new JacksonValueMapperFactory())
                 .generate();
 
         return GraphQL.newGraphQL(schema)
-                .queryExecutionStrategy(new BatchedExecutionStrategy())
+//                .queryExecutionStrategy(new BatchedExecutionStrategy())
+                .queryExecutionStrategy(new AsyncExecutionStrategy())
                 .instrumentation(new ChainedInstrumentation(Arrays.asList(
                         new MaxQueryComplexityInstrumentation(200),
                         new MaxQueryDepthInstrumentation(20)
@@ -120,7 +132,7 @@ public class GraphQLSpqrApplication implements WebSocketConfigurer {
             @GraphQLArgument(name = "conversationId") @GraphQLNonNull Long conversationId,
             @GraphQLArgument(name = "carId") Long carId
         ) {
-            return messageStreamer.emitMessage(new Message(null, body, conversationId, carId));
+            return messageStreamer.emitMessage(new Message(null, body, conversationId, carId, null));
         }
 
         @GraphQLSubscription(name = "messages")
@@ -138,7 +150,7 @@ public class GraphQLSpqrApplication implements WebSocketConfigurer {
             this.jdbcTemplate = jdbcTemplate;
         }
 
-       /* @GraphQLQuery(name = "car")
+        @GraphQLQuery(name = "car")
         public Car car(@GraphQLContext Message message) {
             return jdbcTemplate.queryForObject(
                     "select * from car where id = :carId",
@@ -150,11 +162,12 @@ public class GraphQLSpqrApplication implements WebSocketConfigurer {
                         return car;
                     }
             );
-        }*/
+        }
 
-        @GraphQLQuery(name = "car")
+        /*@GraphQLQuery(name = "car")
         @Batched
         public List<Car> cars(@GraphQLContext List<Message> messages) {
+            log.debug(Thread.currentThread().getName() + ": executes 'car'");
             List<Long> carIds = messages.stream().map(Message::getCarId).collect(Collectors.toList());
             SqlParameterSource parameters = new MapSqlParameterSource("carIds", carIds);
 
@@ -164,7 +177,7 @@ public class GraphQLSpqrApplication implements WebSocketConfigurer {
                 car.setVin(rs.getString(2));
                 return car;
             });
-        }
+        }*/
 
         @GraphQLQuery(name = "images")
         public List<String> images(
@@ -174,6 +187,15 @@ public class GraphQLSpqrApplication implements WebSocketConfigurer {
             return car.getImages().subList(
                 0, limit > 0 ? limit : car.getImages().size());
         }
+    }
+
+    public static class CustomerGraph {
+
+        @GraphQLQuery(name = "customer")
+        public Customer findCustomer(@GraphQLContext Message message) {
+            return new Customer(222L, "Test User");
+        }
+
     }
 
     @Bean
@@ -191,8 +213,8 @@ public class GraphQLSpqrApplication implements WebSocketConfigurer {
 
             Conversation conversation = new Conversation();
             conversationRepository.save(conversation);
-            messageRepository.save(new Message(null, "one", conversation.getId(), car1.getId()));
-            messageRepository.save(new Message(null, "two", conversation.getId(), car2.getId()));
+            messageRepository.save(new Message(null, "one", conversation.getId(), car1.getId(), null));
+            messageRepository.save(new Message(null, "two", conversation.getId(), car2.getId(), null));
         };
     }
 }

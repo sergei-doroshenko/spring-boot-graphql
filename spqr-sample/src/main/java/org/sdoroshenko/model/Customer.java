@@ -5,12 +5,13 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
+import java.util.List;
 
 @Entity
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class Message {
+public class Customer {
 
     @Id
     @Column(nullable = false)
@@ -18,14 +19,5 @@ public class Message {
     private Long id;
 
     @Column(nullable = false)
-    private String body;
-
-    @Column(nullable = false)
-    private Long conversation_id;
-
-    @Column
-    private Long carId;
-
-    @Transient
-    private Customer customer;
+    private String name;
 }
