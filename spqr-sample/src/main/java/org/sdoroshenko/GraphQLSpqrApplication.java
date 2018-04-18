@@ -4,14 +4,16 @@ import com.google.common.collect.Lists;
 import graphql.GraphQL;
 import graphql.analysis.MaxQueryComplexityInstrumentation;
 import graphql.analysis.MaxQueryDepthInstrumentation;
-import graphql.execution.AsyncExecutionStrategy;
 import graphql.execution.ExecutorServiceExecutionStrategy;
-import graphql.execution.batched.Batched;
-import graphql.execution.batched.BatchedExecutionStrategy;
 import graphql.execution.instrumentation.ChainedInstrumentation;
 import graphql.schema.GraphQLSchema;
 import io.leangen.graphql.GraphQLSchemaGenerator;
-import io.leangen.graphql.annotations.*;
+import io.leangen.graphql.annotations.GraphQLArgument;
+import io.leangen.graphql.annotations.GraphQLContext;
+import io.leangen.graphql.annotations.GraphQLMutation;
+import io.leangen.graphql.annotations.GraphQLNonNull;
+import io.leangen.graphql.annotations.GraphQLQuery;
+import io.leangen.graphql.annotations.GraphQLSubscription;
 import io.leangen.graphql.metadata.strategy.value.jackson.JacksonValueMapperFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.reactivestreams.Publisher;
@@ -31,15 +33,15 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
-import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.web.socket.config.annotation.EnableWebSocket;
 import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
 import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.*;
-import java.util.stream.Collectors;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 @SpringBootApplication
 @EnableWebSocket
@@ -79,33 +81,11 @@ public class GraphQLSpqrApplication implements WebSocketConfigurer {
                 .withValueMapperFactory(new JacksonValueMapperFactory())
                 .generate();
 
-        BlockingQueue<Runnable> queue = new LinkedBlockingQueue<Runnable>() {
-            @Override
-            public boolean offer(Runnable e) {
-                /* queue that always rejects tasks */
-                return false;
-            }
-        };
-
-        ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(
-                4, /* core pool size 2 thread */
-                4, /* max pool size 2 thread */
-                30, TimeUnit.SECONDS,
-                /*
-                 * Do not use the queue to prevent threads waiting on enqueued tasks.
-                 */
-                queue,
-                /*
-                 *  If all the threads are working, then the caller thread
-                 *  should execute the code in its own thread. (serially)
-                 */
-                new ThreadPoolExecutor.CallerRunsPolicy());
-
-
+        ExecutorService executor = Executors.newCachedThreadPool();
         return GraphQL.newGraphQL(schema)
 //                .queryExecutionStrategy(new BatchedExecutionStrategy())
 //                .queryExecutionStrategy(new AsyncExecutionStrategy())
-                .queryExecutionStrategy(new ExecutorServiceExecutionStrategy(threadPoolExecutor))
+            .queryExecutionStrategy(new ExecutorServiceExecutionStrategy(executor))
                 .instrumentation(new ChainedInstrumentation(Arrays.asList(
                         new MaxQueryComplexityInstrumentation(200),
                         new MaxQueryDepthInstrumentation(20)
@@ -134,6 +114,7 @@ public class GraphQLSpqrApplication implements WebSocketConfigurer {
 
     }
 
+    @Slf4j
     public static class MessageGraph {
 
         @Autowired
@@ -147,7 +128,10 @@ public class GraphQLSpqrApplication implements WebSocketConfigurer {
 
         @GraphQLQuery(name = "getAllMessages")
         public List<Message> getAllMessages(@GraphQLArgument(name = "limit", defaultValue = "0") int limit) {
-            return Lists.newArrayList(messageRepository.findAll());
+            log.debug("{}. {} {} in: {}", 0, "start", "messages", Thread.currentThread().getName());
+            List<Message> messages = Lists.newArrayList(messageRepository.findAll());
+            log.debug("{}. {} {} in: {}", 0, "completed", "messages", Thread.currentThread().getName());
+            return messages;
         }
 
         @GraphQLMutation(name = "addMessage")
@@ -177,9 +161,9 @@ public class GraphQLSpqrApplication implements WebSocketConfigurer {
 
         @GraphQLQuery(name = "car")
         public Car car(@GraphQLContext Message message) {
-            log.debug("{}. {} {} in: {}", 1, "call", "car", Thread.currentThread().getName());
+            log.debug("{}. {} {} in: {}", 1, "start", "car", Thread.currentThread().getName());
             try {
-                TimeUnit.SECONDS.sleep(5);
+                TimeUnit.SECONDS.sleep(10);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -227,7 +211,7 @@ public class GraphQLSpqrApplication implements WebSocketConfigurer {
 
         @GraphQLQuery(name = "customer")
         public Customer findCustomer(@GraphQLContext Message message) {
-            log.debug("{}. {} {} in: {}", 3, "call", "customer", Thread.currentThread().getName());
+            log.debug("{}. {} {} in: {}", 3, "start", "customer", Thread.currentThread().getName());
             Customer customer = new Customer(222L, "Test User");
             log.debug("{}. {} {} in: {}", 4, "completed", "customer", Thread.currentThread().getName());
             return customer;
