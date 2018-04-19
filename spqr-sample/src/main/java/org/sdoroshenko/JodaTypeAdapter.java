@@ -18,6 +18,24 @@ import java.util.Set;
 
 public class JodaTypeAdapter extends AbstractTypeAdapter<DateTime, Long> {
 
+    private static final GraphQLScalarType GraphQLJodaDateTime = new GraphQLScalarType("JodaDateTime", "Custom JodaDateTime Timestamp", new Coercing<DateTime, Long>() {
+
+        @Override
+        public Long serialize(Object dataFetcherResult) { // we have DateTime instance here
+            return ((DateTime) dataFetcherResult).getMillis();
+        }
+
+        @Override
+        public DateTime parseValue(Object input) {
+            return new DateTime(input);
+        }
+
+        @Override
+        public DateTime parseLiteral(Object input) {
+            return new DateTime(Long.valueOf((String) input));
+        }
+    });
+
     @Override
     public DateTime convertInput(Long substitute, AnnotatedType type, GlobalEnvironment environment, ValueMapper valueMapper) {
         return new DateTime(substitute);
@@ -30,23 +48,7 @@ public class JodaTypeAdapter extends AbstractTypeAdapter<DateTime, Long> {
 
     @Override
     public GraphQLOutputType toGraphQLType(AnnotatedType javaType, Set<Type> abstractTypes, OperationMapper operationMapper, BuildContext buildContext) {
-        return new GraphQLScalarType("Timestamp", "time desc", new Coercing<DateTime, Long>() {
-
-            @Override
-            public Long serialize(Object dataFetcherResult) { // we have DateTime instance here
-                return ((DateTime) dataFetcherResult).getMillis();
-            }
-
-            @Override
-            public DateTime parseValue(Object input) {
-                return new DateTime(input);
-            }
-
-            @Override
-            public DateTime parseLiteral(Object input) {
-                return new DateTime(Long.valueOf((String) input));
-            }
-        });
+        return GraphQLJodaDateTime;
     }
 
     @Override
