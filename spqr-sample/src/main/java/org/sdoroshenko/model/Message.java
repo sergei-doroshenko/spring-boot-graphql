@@ -3,8 +3,14 @@ package org.sdoroshenko.model;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.joda.time.DateTime;
 
-import javax.persistence.*;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.Transient;
 
 @Entity
 @Data
@@ -28,4 +34,7 @@ public class Message {
 
     @Transient
     private Customer customer;
+
+    @Column(nullable = false)
+    private DateTime createdAt;
 }

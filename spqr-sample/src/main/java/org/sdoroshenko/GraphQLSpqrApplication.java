@@ -1,5 +1,7 @@
 package org.sdoroshenko;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.joda.JodaModule;
 import com.google.common.collect.Lists;
 import graphql.GraphQL;
 import graphql.analysis.MaxQueryComplexityInstrumentation;
@@ -16,6 +18,7 @@ import io.leangen.graphql.annotations.GraphQLQuery;
 import io.leangen.graphql.annotations.GraphQLSubscription;
 import io.leangen.graphql.metadata.strategy.value.jackson.JacksonValueMapperFactory;
 import lombok.extern.slf4j.Slf4j;
+import org.joda.time.DateTime;
 import org.reactivestreams.Publisher;
 import org.sdoroshenko.model.Car;
 import org.sdoroshenko.model.Conversation;
@@ -73,11 +76,15 @@ public class GraphQLSpqrApplication implements WebSocketConfigurer {
 
     @Bean
     public GraphQL graphQL(CarGraph carGraph) {
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.registerModule(new JodaModule());
+
         GraphQLSchema schema = new GraphQLSchemaGenerator()
                 .withOperationsFromSingleton(conversationGraph())
                 .withOperationsFromSingleton(messageGraph())
                 .withOperationsFromSingleton(carGraph)
                 .withOperationsFromSingleton(customerGraph())
+            .withTypeMappers(new JodaTypeAdapter()).withDefaultMappers()
                 .withValueMapperFactory(new JacksonValueMapperFactory())
                 .generate();
 
@@ -114,39 +121,24 @@ public class GraphQLSpqrApplication implements WebSocketConfigurer {
 
     }
 
-    @Slf4j
-    public static class MessageGraph {
+    @Bean
+    public CommandLineRunner startup(
+        ConversationRepository conversationRepository,
+        MessageRepository messageRepository,
+        CarRepository carRepository
+    ) {
+        return (args) -> {
+            Car car1 = new Car(null, "vin1", null);
+            carRepository.save(car1);
+            Car car2 = new Car(null, "vin2", null);
+            carRepository.save(car2);
 
-        @Autowired
-        private MessageRepository messageRepository;
 
-        @Autowired
-        private MessageStreamer messagePublisher;
-
-        @Autowired
-        private MessageStreamer messageStreamer;
-
-        @GraphQLQuery(name = "getAllMessages")
-        public List<Message> getAllMessages(@GraphQLArgument(name = "limit", defaultValue = "0") int limit) {
-            log.debug("{}. {} {} in: {}", 0, "start", "messages", Thread.currentThread().getName());
-            List<Message> messages = Lists.newArrayList(messageRepository.findAll());
-            log.debug("{}. {} {} in: {}", 0, "completed", "messages", Thread.currentThread().getName());
-            return messages;
-        }
-
-        @GraphQLMutation(name = "addMessage")
-        public Message addMessage(
-            @GraphQLArgument(name = "body") @GraphQLNonNull String body,
-            @GraphQLArgument(name = "conversationId") @GraphQLNonNull Long conversationId,
-            @GraphQLArgument(name = "carId") Long carId
-        ) {
-            return messageStreamer.emitMessage(new Message(null, body, conversationId, carId, null));
-        }
-
-        @GraphQLSubscription(name = "messages")
-        public Publisher<Message> messages() {
-            return messagePublisher.getPublisher();
-        }
+            Conversation conversation = new Conversation();
+            conversationRepository.save(conversation);
+            messageRepository.save(new Message(null, "one", conversation.getId(), car1.getId(), null, DateTime.now()));
+            messageRepository.save(new Message(null, "two", conversation.getId(), car2.getId(), null, DateTime.now()));
+        };
     }
 
     @Slf4j
@@ -219,23 +211,39 @@ public class GraphQLSpqrApplication implements WebSocketConfigurer {
 
     }
 
-    @Bean
-    public CommandLineRunner startup(
-            ConversationRepository conversationRepository,
-            MessageRepository messageRepository,
-            CarRepository carRepository
-    ) {
-        return (args) -> {
-            Car car1 = new Car(null, "vin1", null);
-            carRepository.save(car1);
-            Car car2 = new Car(null, "vin2", null);
-            carRepository.save(car2);
+    @Slf4j
+    public static class MessageGraph {
 
+        @Autowired
+        private MessageRepository messageRepository;
 
-            Conversation conversation = new Conversation();
-            conversationRepository.save(conversation);
-            messageRepository.save(new Message(null, "one", conversation.getId(), car1.getId(), null));
-            messageRepository.save(new Message(null, "two", conversation.getId(), car2.getId(), null));
-        };
+        @Autowired
+        private MessageStreamer messagePublisher;
+
+        @Autowired
+        private MessageStreamer messageStreamer;
+
+        @GraphQLQuery(name = "getAllMessages")
+        public List<Message> getAllMessages(@GraphQLArgument(name = "limit", defaultValue = "0") int limit) {
+            log.debug("{}. {} {} in: {}", 0, "start", "messages", Thread.currentThread().getName());
+            List<Message> messages = Lists.newArrayList(messageRepository.findAll());
+            log.debug("{}. {} {} in: {}", 0, "completed", "messages", Thread.currentThread().getName());
+            return messages;
+        }
+
+        @GraphQLMutation(name = "addMessage")
+        public Message addMessage(
+            @GraphQLArgument(name = "body") @GraphQLNonNull String body,
+            @GraphQLArgument(name = "conversationId") @GraphQLNonNull Long conversationId,
+            @GraphQLArgument(name = "carId") Long carId,
+            @GraphQLArgument(name = "date") Long timestamp
+        ) {
+            return messageStreamer.emitMessage(new Message(null, body, conversationId, carId, null, new DateTime(timestamp)));
+        }
+
+        @GraphQLSubscription(name = "messages")
+        public Publisher<Message> messages() {
+            return messagePublisher.getPublisher();
+        }
     }
 }
