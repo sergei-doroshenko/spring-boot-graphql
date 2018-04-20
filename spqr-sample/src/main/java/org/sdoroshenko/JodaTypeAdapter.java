@@ -13,8 +13,6 @@ import io.leangen.graphql.metadata.strategy.value.ValueMapper;
 import org.joda.time.DateTime;
 
 import java.lang.reflect.AnnotatedType;
-import java.lang.reflect.Type;
-import java.util.Set;
 
 public class JodaTypeAdapter extends AbstractTypeAdapter<DateTime, Long> {
 
@@ -47,7 +45,7 @@ public class JodaTypeAdapter extends AbstractTypeAdapter<DateTime, Long> {
     }
 
     @Override
-    public GraphQLOutputType toGraphQLType(AnnotatedType javaType, Set<Type> abstractTypes, OperationMapper operationMapper, BuildContext buildContext) {
+    public GraphQLOutputType toGraphQLType(AnnotatedType javaType, OperationMapper operationMapper, BuildContext buildContext) {
         return GraphQLJodaDateTime;
     }
 

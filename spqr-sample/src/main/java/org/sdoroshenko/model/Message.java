@@ -26,6 +26,7 @@ public class Message {
     @Column(nullable = false)
     private String body;
 
+    @Deprecated
     @Column(nullable = false)
     private Long conversation_id;
 

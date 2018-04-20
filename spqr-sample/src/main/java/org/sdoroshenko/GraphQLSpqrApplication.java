@@ -80,24 +80,25 @@ public class GraphQLSpqrApplication implements WebSocketConfigurer {
         mapper.registerModule(new JodaModule());
 
         GraphQLSchema schema = new GraphQLSchemaGenerator()
-                .withOperationsFromSingleton(conversationGraph())
-                .withOperationsFromSingleton(messageGraph())
-                .withOperationsFromSingleton(carGraph)
-                .withOperationsFromSingleton(customerGraph())
-            .withTypeMappers(new JodaTypeAdapter()).withDefaultMappers()
-                .withValueMapperFactory(new JacksonValueMapperFactory())
-                .generate();
+            .withBasePackages("org.sdoroshenko")
+            .withOperationsFromSingleton(conversationGraph())
+            .withOperationsFromSingleton(messageGraph())
+            .withOperationsFromSingleton(carGraph)
+            .withOperationsFromSingleton(customerGraph())
+            .withTypeMappers((config, defaults) -> defaults.insert(0, new JodaTypeAdapter()))
+            .withValueMapperFactory(new JacksonValueMapperFactory())
+            .generate();
 
         ExecutorService executor = Executors.newCachedThreadPool();
         return GraphQL.newGraphQL(schema)
 //                .queryExecutionStrategy(new BatchedExecutionStrategy())
 //                .queryExecutionStrategy(new AsyncExecutionStrategy())
             .queryExecutionStrategy(new ExecutorServiceExecutionStrategy(executor))
-                .instrumentation(new ChainedInstrumentation(Arrays.asList(
-                        new MaxQueryComplexityInstrumentation(200),
-                        new MaxQueryDepthInstrumentation(20)
-                )))
-                .build();
+            .instrumentation(new ChainedInstrumentation(Arrays.asList(
+                new MaxQueryComplexityInstrumentation(200),
+                new MaxQueryDepthInstrumentation(20)
+            )))
+            .build();
     }
 
     @Bean
@@ -151,7 +152,8 @@ public class GraphQLSpqrApplication implements WebSocketConfigurer {
             this.jdbcTemplate = jdbcTemplate;
         }
 
-        @GraphQLQuery(name = "car")
+        @Deprecated
+        @GraphQLQuery(name = "car", deprecationReason = "Boring")
         public Car car(@GraphQLContext Message message) {
             log.debug("{}. {} {} in: {}", 1, "start", "car", Thread.currentThread().getName());
             try {
