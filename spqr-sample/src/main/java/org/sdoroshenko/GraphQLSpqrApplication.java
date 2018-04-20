@@ -16,6 +16,9 @@ import io.leangen.graphql.annotations.GraphQLMutation;
 import io.leangen.graphql.annotations.GraphQLNonNull;
 import io.leangen.graphql.annotations.GraphQLQuery;
 import io.leangen.graphql.annotations.GraphQLSubscription;
+import io.leangen.graphql.metadata.strategy.query.AnnotatedResolverBuilder;
+import io.leangen.graphql.metadata.strategy.query.BeanResolverBuilder;
+import io.leangen.graphql.metadata.strategy.query.PublicResolverBuilder;
 import io.leangen.graphql.metadata.strategy.value.jackson.JacksonValueMapperFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
@@ -80,7 +83,12 @@ public class GraphQLSpqrApplication implements WebSocketConfigurer {
         mapper.registerModule(new JodaModule());
 
         GraphQLSchema schema = new GraphQLSchemaGenerator()
-            .withBasePackages("org.sdoroshenko")
+            .withResolverBuilders(
+                new BeanResolverBuilder("org.sdoroshenko.model"),
+                // Resolve by annotations.
+                new AnnotatedResolverBuilder(),
+                // Resolve public methods inside root package.
+                new PublicResolverBuilder("org.sdoroshenko.model"))
             .withOperationsFromSingleton(conversationGraph())
             .withOperationsFromSingleton(messageGraph())
             .withOperationsFromSingleton(carGraph)
@@ -116,10 +124,13 @@ public class GraphQLSpqrApplication implements WebSocketConfigurer {
         private ConversationRepository conversationRepository;
 
         @GraphQLQuery
-        public Conversation getConversation(@GraphQLArgument(name = "id") @GraphQLNonNull Long conversationId) {
+        public Conversation getConversation(@GraphQLArgument(name = "id") @GraphQLNonNull Long conversationId,
+                                            @GraphQLArgument(name = "filters") List<Filter> filters) {
+            System.out.println(filters);
             return conversationRepository.findOne(conversationId);
         }
 
+        enum Filter {ACTIVE, SMART_DEALER}
     }
 
     @Bean
