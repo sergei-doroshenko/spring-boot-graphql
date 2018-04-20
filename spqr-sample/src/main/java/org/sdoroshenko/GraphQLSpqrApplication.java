@@ -12,10 +12,12 @@ import graphql.schema.GraphQLSchema;
 import io.leangen.graphql.GraphQLSchemaGenerator;
 import io.leangen.graphql.annotations.GraphQLArgument;
 import io.leangen.graphql.annotations.GraphQLContext;
+import io.leangen.graphql.annotations.GraphQLEnumValue;
 import io.leangen.graphql.annotations.GraphQLMutation;
 import io.leangen.graphql.annotations.GraphQLNonNull;
 import io.leangen.graphql.annotations.GraphQLQuery;
 import io.leangen.graphql.annotations.GraphQLSubscription;
+import io.leangen.graphql.annotations.types.GraphQLType;
 import io.leangen.graphql.metadata.strategy.query.AnnotatedResolverBuilder;
 import io.leangen.graphql.metadata.strategy.query.BeanResolverBuilder;
 import io.leangen.graphql.metadata.strategy.query.PublicResolverBuilder;
@@ -119,6 +121,7 @@ public class GraphQLSpqrApplication implements WebSocketConfigurer {
         registry.addHandler(socketHandler(), "/messages-spqr").setAllowedOrigins("*");
     }
 
+    @Slf4j
     public static class ConversationGraph {
         @Autowired
         private ConversationRepository conversationRepository;
@@ -126,11 +129,16 @@ public class GraphQLSpqrApplication implements WebSocketConfigurer {
         @GraphQLQuery
         public Conversation getConversation(@GraphQLArgument(name = "id") @GraphQLNonNull Long conversationId,
                                             @GraphQLArgument(name = "filters") List<Filter> filters) {
-            System.out.println(filters);
+            log.debug(filters.toString());
             return conversationRepository.findOne(conversationId);
         }
 
-        enum Filter {ACTIVE, SMART_DEALER}
+        @SuppressWarnings("unused")
+        @GraphQLType(description = "Conversation filters")
+        enum Filter {
+            @GraphQLEnumValue(deprecationReason = "Impossible") ACTIVE,
+            @GraphQLEnumValue SMART_DEALER
+        }
     }
 
     @Bean
