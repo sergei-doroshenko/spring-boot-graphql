@@ -61,8 +61,8 @@ public class ComplexityTest {
             conversation.setId(100L);
             conversation.setMessages(
                     Arrays.asList(
-                            new Message(20L, "test 1", conversation.getId(), null, new Customer()),
-                            new Message(30L, "test 2", conversation.getId(), null, new Customer())
+                            new Message(20L, "test 1", conversation.getId(), null, new Customer(), null),
+                            new Message(30L, "test 2", conversation.getId(), null, new Customer(), null)
                     )
             );
 

@@ -59,8 +59,8 @@ public class QueryTest {
             conversation.setId(100L);
             conversation.setMessages(
                     Arrays.asList(
-                            new Message(20L, "test 1", conversation.getId(), null, null),
-                            new Message(30L, "test 2", conversation.getId(), null, null)
+                            new Message(20L, "test 1", conversation.getId(), null, null, null),
+                            new Message(30L, "test 2", conversation.getId(), null, null, null)
                     )
             );
 

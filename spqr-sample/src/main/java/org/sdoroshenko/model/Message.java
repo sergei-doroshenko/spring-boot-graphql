@@ -1,8 +1,7 @@
 package org.sdoroshenko.model;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import io.leangen.graphql.annotations.GraphQLQuery;
+import lombok.*;
 import org.joda.time.DateTime;
 
 import javax.persistence.Column;
@@ -37,4 +36,10 @@ public class Message {
 
     @Column(nullable = false)
     private DateTime createdAt;
+
+    @Deprecated
+    @GraphQLQuery(deprecationReason = "replaced by Conversation instance")
+    public Long getConversationId() {
+        return conversationId;
+    }
 }
