@@ -10,6 +10,7 @@
     <modules>
         <module>spqr-sample</module>
         <module>java-tools-sample</module>
+        <module>deferred</module>
     </modules>
     <packaging>pom</packaging>
 

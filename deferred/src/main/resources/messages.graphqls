@@ -1,0 +1,16 @@
+#
+# Schemas must have at least a query root type
+#
+schema {
+    query: Query
+}
+
+type Query {
+    hello : String
+    messages : [Message]!
+}
+
+type Message {
+    id: Long!
+    body: String!
+}

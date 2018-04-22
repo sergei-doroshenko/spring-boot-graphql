@@ -69,3 +69,10 @@ Hibernate:
    "variables":{"uuid":"88888888-4444-4444-4444-121212121212"}
 }
 ```
+For deferred execution:
+url: ws://localhost:8080/qraphql
+```
+{
+  "query": "{ messages { id body @defer } }"
+}
+```
