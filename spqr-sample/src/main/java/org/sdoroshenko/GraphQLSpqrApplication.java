@@ -22,6 +22,7 @@ import io.leangen.graphql.metadata.strategy.query.AnnotatedResolverBuilder;
 import io.leangen.graphql.metadata.strategy.query.BeanResolverBuilder;
 import io.leangen.graphql.metadata.strategy.query.PublicResolverBuilder;
 import io.leangen.graphql.metadata.strategy.value.jackson.JacksonValueMapperFactory;
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
 import org.reactivestreams.Publisher;
@@ -232,6 +233,12 @@ public class GraphQLSpqrApplication implements WebSocketConfigurer {
 
     }
 
+    @Data
+    static class Filters {
+        private String authorFilter;
+        private String bodyFilter;
+    }
+
     @Slf4j
     public static class MessageGraph {
 
@@ -244,8 +251,13 @@ public class GraphQLSpqrApplication implements WebSocketConfigurer {
         @Autowired
         private MessageStreamer messageStreamer;
 
-        @GraphQLQuery(name = "getAllMessages")
-        public List<Message> getAllMessages(@GraphQLArgument(name = "limit", defaultValue = "0") int limit) {
+        final String defaultFilters = "{\"bodyFilter\": \"defaultBody\", \"authorFilter\": \"defaultAuthor\"}";
+
+        @GraphQLQuery(name = "getAllMessages", description = "Fetch all messages")
+        public List<Message> getAllMessages(
+            @GraphQLArgument(name = "limit", defaultValue = "0") int limit,
+            @GraphQLArgument(name = "filters", defaultValue = defaultFilters) Filters filters) {
+            log.debug("Filters {}", filters);
             log.debug("{}. {} {} in: {}", 0, "start", "messages", Thread.currentThread().getName());
             List<Message> messages = Lists.newArrayList(messageRepository.findAll());
             log.debug("{}. {} {} in: {}", 0, "completed", "messages", Thread.currentThread().getName());

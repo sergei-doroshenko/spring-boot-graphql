@@ -10,16 +10,6 @@ postman POST
 	"query":"{findAllCars{id vin make}}"
 }`
 
-for subscription:
-`ws://localhost:8080/messages-spqr`
-query
-`
-{
-	"query": "subscription {messages {id}}",
-	"variables": null
-}
-`
-
 logs without and with batch fetching:
 ...
 ```
@@ -69,6 +59,17 @@ Hibernate:
    "variables":{"uuid":"88888888-4444-4444-4444-121212121212"}
 }
 ```
+
+For subscription:
+`ws://localhost:8080/messages-spqr`
+query
+`
+{
+	"query": "subscription {messages {id}}",
+	"variables": null
+}
+`
+
 For deferred execution:
 url: ws://localhost:8080/qraphql
 ```
