@@ -22,10 +22,10 @@ import io.leangen.graphql.metadata.strategy.query.AnnotatedResolverBuilder;
 import io.leangen.graphql.metadata.strategy.query.BeanResolverBuilder;
 import io.leangen.graphql.metadata.strategy.query.PublicResolverBuilder;
 import io.leangen.graphql.metadata.strategy.value.jackson.JacksonValueMapperFactory;
-import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
 import org.reactivestreams.Publisher;
+import org.sdoroshenko.dto.Filters;
 import org.sdoroshenko.model.Car;
 import org.sdoroshenko.model.Conversation;
 import org.sdoroshenko.model.Customer;
@@ -87,7 +87,7 @@ public class GraphQLSpqrApplication implements WebSocketConfigurer {
 
         GraphQLSchema schema = new GraphQLSchemaGenerator()
             .withResolverBuilders(
-                new BeanResolverBuilder("org.sdoroshenko.model"),
+                new BeanResolverBuilder("org.sdoroshenko.dto"),
                 // Resolve by annotations.
                 new AnnotatedResolverBuilder(),
                 // Resolve public methods inside root package.
@@ -231,12 +231,6 @@ public class GraphQLSpqrApplication implements WebSocketConfigurer {
             return customer;
         }
 
-    }
-
-    @Data
-    static class Filters {
-        private String authorFilter;
-        private String bodyFilter;
     }
 
     @Slf4j
