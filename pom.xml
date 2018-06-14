@@ -11,11 +11,12 @@
         <module>spqr-sample</module>
         <module>java-tools-sample</module>
         <module>deferred</module>
+        <module>data-loader</module>
     </modules>
     <packaging>pom</packaging>
 
-    <name>Spring Boot GraphQL Server</name>
-    <description>Spring Boot GraphQL Server</description>
+    <name>GraphQL Spring Boot</name>
+    <description>GraphQL examples powered by Spring Boot</description>
 
     <parent>
         <groupId>org.springframework.boot</groupId>

@@ -60,18 +60,37 @@ Hibernate:
 }
 ```
 
+Use filters like:
+```$json
+{
+  getConversation(id: 1, filters:[smart, light]) {
+    id
+    messages {
+      id
+      body
+    }
+  }
+}
+```
+
 For subscription:
 `ws://localhost:8080/messages-spqr`
-query
-`
-{
-	"query": "subscription {messages {id}}",
-	"variables": null
-}
-`
 
-For deferred execution:
-url: ws://localhost:8080/qraphql
+mutation queries:
+```
+{
+  "query": "subscription {messages {id}}",
+  "variables": null
+}
+```
+```
+{
+  "query": "subscription {messages {id body}}"
+}
+```
+
+For deferred query execution:
+`url: ws://localhost:8080/qraphql`
 ```
 {
   "query": "{ messages { id body @defer } }"
