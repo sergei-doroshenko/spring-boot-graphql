@@ -116,7 +116,7 @@ public class GraphQLSpqrApplication implements WebSocketConfigurer {
 
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
-        registry.addHandler(socketHandler(), "/messages-spqr").setAllowedOrigins("*");
+        registry.addHandler(socketHandler(), "/messages-spqr/*").setAllowedOrigins("*");
     }
 
     @Bean
