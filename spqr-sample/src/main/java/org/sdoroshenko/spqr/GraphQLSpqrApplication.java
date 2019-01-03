@@ -61,11 +61,11 @@ public class GraphQLSpqrApplication implements WebSocketConfigurer {
 
     @Bean
     public DataLoaderRegistry dataLoaderRegistry(CarService carService) {
-        BatchLoader<Long, Car> characterBatchLoader = ids -> {
+        BatchLoader<Long, Car> carBatchLoader = ids -> {
             // we use supplyAsync() of values here for maximum parallelization
             return CompletableFuture.supplyAsync(() -> carService.getCarDataViaBatchSQL(ids));
         };
-        DataLoader<Long, Car> carDataLoader = new DataLoader<>(characterBatchLoader);
+        DataLoader<Long, Car> carDataLoader = DataLoader.newDataLoader(carBatchLoader);
         DataLoaderRegistry registry = new DataLoaderRegistry();
         registry.register("car", carDataLoader);
         return registry;
